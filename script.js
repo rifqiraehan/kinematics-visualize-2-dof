@@ -15,21 +15,22 @@ const ik2_t1 = document.getElementById('ik2_t1');
 const ik2_t2 = document.getElementById('ik2_t2');
 const gripPulse = document.getElementById('gripPulse');
 const gripMmEl = document.getElementById('gripMm');
+const gripPulseOpenEl = document.getElementById('gripPulseOpen');
+const gripPulseClosedEl = document.getElementById('gripPulseClosed');
+const gripMmOpenEl = document.getElementById('gripMmOpen');
 const debugEl = document.getElementById('debug');
 
 const canvas = document.getElementById('robotCanvas');
 const ctx = canvas.getContext('2d');
 
-// constants for grip mapping
-const gripPulseOpen = 770; // µs -> 380 mm
-const gripPulseClosed = 1700; // µs -> 0 mm
-const gripMmOpen = 380; // mm
-
 function gripPulseToMm(pulse) {
-  // linear map: pulseOpen -> openMm, pulseClosed -> 0
-  const t = (pulse - gripPulseOpen) / (gripPulseClosed - gripPulseOpen);
-  const mm = gripMmOpen * (1 - t);
-  return clamp(mm, 0, gripMmOpen);
+  const pulseOpen = Number(gripPulseOpenEl.value);
+  const pulseClosed = Number(gripPulseClosedEl.value);
+  const mmOpen = Number(gripMmOpenEl.value);
+
+  const t = (pulse - pulseOpen) / (pulseClosed - pulseOpen);
+  const mm = mmOpen * (1 - t);
+  return clamp(mm, 0, mmOpen);
 }
 
 autoUpdateGrip();
@@ -38,7 +39,9 @@ function autoUpdateGrip() {
   const p = Number(gripPulse.value);
   gripMmEl.textContent = gripPulseToMm(p).toFixed(0);
 }
-gripPulse.addEventListener('input', autoUpdateGrip);
+[gripPulse, gripPulseOpenEl, gripPulseClosedEl, gripMmOpenEl].forEach(el => {
+  el.addEventListener('input', autoUpdateGrip);
+});
 
 // drawing helpers
 function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height) }

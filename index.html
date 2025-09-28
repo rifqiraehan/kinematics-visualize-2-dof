@@ -58,14 +58,35 @@
 
       <fieldset>
         <legend><strong>Jepit (Servo 4)</strong></legend>
-        <div class="row">
-          <label>Pulse (µs): <input id="gripPulse" type="number" value="770" step="1"></label>
+
+        <div class="row" style="display: flex; justify-content: space-between; gap: 10px;">
+          <div style="flex: 1;">
+            <label for="gripPulseOpen">Pulse Open (µs):</label>
+            <input id="gripPulseOpen" type="number" value="770" step="1" style="width: 80%;">
+          </div>
+          <div style="flex: 1;">
+            <label for="gripPulseClosed">Pulse Closed (µs):</label>
+            <input id="gripPulseClosed" type="number" value="1700" step="1" style="width: 80%;">
+          </div>
         </div>
-        <div class="muted">Mapping linear: 770 µs → 380 mm (terbuka penuh); 1700 µs → 0 mm (tertutup penuh)</div>
+
+        <div class="row" style="display: flex; justify-content: space-between; gap: 10px;">
+          <div style="flex: 1;">
+            <label for="gripMmOpen">Grip Open (mm):</label>
+            <input id="gripMmOpen" type="number" value="380" step="1" style="width: 80%;">
+          </div>
+          <div style="flex: 1;">
+            <label for="gripPulse">Pulse (µs):</label>
+            <input id="gripPulse" type="number" value="770" step="1" style="width: 80%;">
+          </div>
+        </div>
+
+        <div class="muted">Mapping linear: Pulse Open → Grip Open (mm); Pulse Closed → 0 mm</div>
         <div style="margin-top:8px">Grip (mm): <span id="gripMm">380</span></div>
       </fieldset>
 
-      <div style="margin-top:6px" class="muted">Catatan: semua perhitungan dalam mm dan derajat. IK memperhitungkan dua solusi (elbow-up dan elbow-down). Jika target di luar jangkauan, sistem memberi peringatan.</div>
+      <div style="margin-top:6px" class="muted">Catatan: semua perhitungan dalam mm dan derajat. IK memperhitungkan dua
+        solusi (elbow-up dan elbow-down). Jika target di luar jangkauan, sistem memberi peringatan.</div>
     </div>
 
     <div class="card">
