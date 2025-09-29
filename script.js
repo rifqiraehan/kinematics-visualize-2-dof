@@ -90,7 +90,7 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
   const origin = { x: w / 2, y: h - margin };
   drawGrid(maxReach, origin, scale);
 
-  const t1 = deg2rad(theta1_deg);
+  const t1 = deg2rad(theta1_deg + 90); // Add 90 degrees offset for vertical zero
   const t2 = deg2rad(theta2_deg);
 
   const x1 = a1 * Math.cos(t1);
@@ -156,7 +156,7 @@ function drawGridDefault() {
 
 // FK
 function computeForward(a1, a2, theta1_deg, theta2_deg) {
-  const t1 = deg2rad(theta1_deg);
+  const t1 = deg2rad(theta1_deg + 90); // Add 90 degrees offset for vertical zero
   const t2 = deg2rad(theta2_deg);
   const px = a1 * Math.cos(t1) + a2 * Math.cos(t1 + t2);
   const py = a1 * Math.sin(t1) + a2 * Math.sin(t1 + t2);
@@ -173,10 +173,14 @@ function computeInverse(a1, a2, px, py) {
   const t2a = Math.acos(cosT2);
   const t2b = -Math.acos(cosT2);
 
-  const t1a = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2a), a1 + a2 * Math.cos(t2a));
-  const t1b = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2b), a1 + a2 * Math.cos(t2b));
+  const t1a_std = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2a), a1 + a2 * Math.cos(t2a));
+  const t1b_std = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2b), a1 + a2 * Math.cos(t2b));
 
-  return [{ t1: rad2deg(t1a), t2: rad2deg(t2a) }, { t1: rad2deg(t1b), t2: rad2deg(t2b) }];
+  // Map standard angle (X-axis zero) back to desired angle (Y-axis zero)
+  const t1a_offset = rad2deg(t1a_std) - 90;
+  const t1b_offset = rad2deg(t1b_std) - 90;
+
+  return [{ t1: t1a_offset, t2: rad2deg(t2a) }, { t1: t1b_offset, t2: rad2deg(t2b) }];
 }
 
 // event handlers
