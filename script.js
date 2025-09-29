@@ -184,9 +184,14 @@ document.getElementById('btnFK').addEventListener('click', () => {
   const a1 = Number(a1El.value); const a2 = Number(a2El.value);
   const t1 = Number(theta1El.value); const t2 = Number(theta2El.value);
   const { px, py } = computeForward(a1, a2, t1, t2);
+
   fkResultEl.textContent = `Px = ${px.toFixed(2)} mm, Py = ${py.toFixed(2)} mm`;
+
+  pxEl.value = px.toFixed(2);
+  pyEl.value = py.toFixed(2);
+
   drawArm(t1, t2, a1, a2);
-  debugEl.textContent = `Forward: θ1=${t1}°, θ2=${t2}° → Px=${px.toFixed(2)}, Py=${py.toFixed(2)}`;
+  debugEl.textContent = `Forward: θ1=${t1}°, θ2=${t2}° → Px=${px.toFixed(2)}, Py=${py.toFixed(2)}. IK Px/Py diisi otomatis.`;
 });
 
 document.getElementById('btnFKReset').addEventListener('click', () => {
