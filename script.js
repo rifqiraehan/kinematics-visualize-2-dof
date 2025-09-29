@@ -134,10 +134,74 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
   // joint 2
   ctx.beginPath(); ctx.arc(sx1, sy1, 6, 0, Math.PI * 2); ctx.fillStyle = '#0a8a5f'; ctx.fill();
 
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(255, 92, 58, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+
+  // Horizontal Guide (Py)
+  ctx.moveTo(origin.x, sy2);
+  ctx.lineTo(sx2, sy2);
+
+  // Vertical Guide (Px)
+  ctx.moveTo(sx2, origin.y);
+  ctx.lineTo(sx2, sy2);
+
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.save();
+  ctx.fillStyle = '#222';
+  ctx.font = '10px Arial';
+
+  const textOffset = 8;
+
+  const midY = (origin.y + sy2) / 2;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`Px: ${x2.toFixed(1)}`, sx2 + textOffset, midY);
+
+  const midX = (origin.x + sx2) / 2;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`Py: ${y2.toFixed(1)}`, midX, sy2 + textOffset);
+
+  ctx.restore();
+
   // end effector
   ctx.beginPath(); ctx.arc(sx2, sy2, 6, 0, Math.PI * 2); ctx.fillStyle = '#ffb020'; ctx.fill();
 
-  // labels
+  ctx.save();
+  ctx.strokeStyle = '#222';
+  ctx.fillStyle = '#222';
+  ctx.lineWidth = 1;
+  ctx.font = '10px Arial';
+
+  // Get angles in radians (using the offsetted t1 for true rotation)
+  const t1_rad = deg2rad(theta1_deg + 90);
+  const t2_rad = deg2rad(theta2_deg);
+
+  const r1 = 30; // Radius of arc
+  const startAngle1 = deg2rad(90); // Start from vertical (your 0 degree reference)
+  const endAngle1 = t1_rad;
+
+  // Position text slightly outside the arc
+  const textAngle1 = (startAngle1 + endAngle1) / 2;
+  const textX1 = origin.x + (r1 * scale + 15) * Math.cos(textAngle1);
+  const textY1 = origin.y - (r1 * scale + 15) * Math.sin(textAngle1);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`θ1: ${theta1_deg.toFixed(1)}°`, textX1, textY1);
+
+  const r2 = 30; // Radius of arc
+  const t1_plus_t2 = t1_rad + t2_rad;
+
+  const textAngle2 = (t1_rad + t1_plus_t2) / 2;
+  const textX2 = sx1 + (r2 * scale + 15) * Math.cos(textAngle2);
+  const textY2 = sy1 - (r2 * scale + 15) * Math.sin(textAngle2);
+  ctx.fillText(`θ2: ${theta2_deg.toFixed(1)}°`, textX2, textY2);
+
+  ctx.restore();
+
   ctx.font = '12px Arial'; ctx.fillStyle = '#222';
   ctx.fillText(`Px: ${x2.toFixed(1)} mm`, 8, 18);
   ctx.fillText(`Py: ${y2.toFixed(1)} mm`, 8, 36);
