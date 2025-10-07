@@ -19,6 +19,8 @@ const gripPulseOpenEl = document.getElementById('gripPulseOpen');
 const gripPulseClosedEl = document.getElementById('gripPulseClosed');
 const gripMmOpenEl = document.getElementById('gripMmOpen');
 const debugEl = document.getElementById('debug');
+const offsetToggleEl = document.getElementById('offsetToggle');
+let isOffsetEnabled = offsetToggleEl.checked;
 
 const canvas = document.getElementById('robotCanvas');
 const ctx = canvas.getContext('2d');
@@ -36,6 +38,10 @@ const SERVO_PARAMS = {
 };
 
 const COMMAND_SPEED = 1000;
+
+function getOffset() {
+  return isOffsetEnabled ? 90 : 0;
+}
 
 function updateRobotCommand(t1, t2) {
   const p1 = angleToPulse(t1,
@@ -120,7 +126,8 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
   const origin = { x: w / 2, y: h - margin };
   drawGrid(maxReach, origin, scale);
 
-  const t1 = deg2rad(theta1_deg + 90); // Add 90 degrees offset for vertical zero
+  const offset = getOffset();
+  const t1 = deg2rad(theta1_deg + offset);
   const t2 = deg2rad(theta2_deg);
 
   const x1 = a1 * Math.cos(t1);
@@ -133,7 +140,6 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
   const sx2 = origin.x + x2 * scale;
   const sy2 = origin.y - y2 * scale;
 
-  // draw reach circle
   ctx.beginPath();
   ctx.arc(origin.x, origin.y, maxReach * scale, 0, Math.PI * 2);
   ctx.strokeStyle = 'rgba(30,58,138,0.12)';
@@ -206,15 +212,13 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
   ctx.lineWidth = 1;
   ctx.font = '10px Arial';
 
-  // Get angles in radians (using the offsetted t1 for true rotation)
-  const t1_rad = deg2rad(theta1_deg + 90);
+  const t1_rad = deg2rad(theta1_deg + offset);
   const t2_rad = deg2rad(theta2_deg);
 
-  const r1 = 30; // Radius of arc
-  const startAngle1 = deg2rad(90); // Start from vertical (your 0 degree reference)
+  const r1 = 30;
+  const startAngle1 = deg2rad(90);
   const endAngle1 = t1_rad;
 
-  // Position text slightly outside the arc
   const textAngle1 = (startAngle1 + endAngle1) / 2;
   const textX1 = origin.x + (r1 * scale + 15) * Math.cos(textAngle1);
   const textY1 = origin.y - (r1 * scale + 15) * Math.sin(textAngle1);
@@ -222,7 +226,7 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
   ctx.textBaseline = 'middle';
   ctx.fillText(`θ1: ${theta1_deg.toFixed(1)}°`, textX1, textY1);
 
-  const r2 = 30; // Radius of arc
+  const r2 = 30;
   const t1_plus_t2 = t1_rad + t2_rad;
 
   const textAngle2 = (t1_rad + t1_plus_t2) / 2;
@@ -241,16 +245,34 @@ function drawArm(theta1_deg, theta2_deg, a1, a2) {
 function drawGridDefault() {
   const w = canvas.width, h = canvas.height;
   const margin = 40;
-  const maxReach = 400; // nilai default biar ada grid
-  const scale = 1;      // default, tidak disesuaikan
+  const maxReach = 400;
+  const scale = 1;
 
   const origin = { x: w / 2, y: h - margin };
   drawGrid(maxReach, origin, scale);
 }
 
+offsetToggleEl.addEventListener('change', () => {
+  isOffsetEnabled = offsetToggleEl.checked;
+  redraw();
+  // Jika tombol IK terakhir dijalankan, hitung ulang untuk memperbarui hasil IK di UI
+  const a1 = Number(a1El.value); const a2 = Number(a2El.value);
+  const px = Number(pxEl.value); const py = Number(pyEl.value);
+  const r = Math.hypot(px, py);
+  // Cek apakah hasil IK sebelumnya sudah valid (r > 0)
+  if (r > 1e-6) {
+    // Jalankan ulang IK untuk memperbarui tampilan sudut
+    const sols = computeInverse(a1, a2, px, py);
+    sols.forEach(s => { s.t1 = ((s.t1 + 180) % 360) - 180; s.t2 = ((s.t2 + 180) % 360) - 180; });
+    ik1_t1.textContent = sols[0].t1.toFixed(2); ik1_t2.textContent = sols[0].t2.toFixed(2);
+    ik2_t1.textContent = sols[1].t1.toFixed(2); ik2_t2.textContent = sols[1].t2.toFixed(2);
+  }
+});
+
 // FK
 function computeForward(a1, a2, theta1_deg, theta2_deg) {
-  const t1 = deg2rad(theta1_deg + 90); // Add 90 degrees offset for vertical zero
+  const offset = getOffset();
+  const t1 = deg2rad(theta1_deg + offset); // Add 90 degrees offset for vertical zero
   const t2 = deg2rad(theta2_deg);
   const px = a1 * Math.cos(t1) + a2 * Math.cos(t1 + t2);
   const py = a1 * Math.sin(t1) + a2 * Math.sin(t1 + t2);
@@ -271,8 +293,9 @@ function computeInverse(a1, a2, px, py) {
   const t1b_std = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2b), a1 + a2 * Math.cos(t2b));
 
   // Map standard angle (X-axis zero) back to desired angle (Y-axis zero)
-  const t1a_offset = rad2deg(t1a_std) - 90;
-  const t1b_offset = rad2deg(t1b_std) - 90;
+  const offset = getOffset();
+  const t1a_offset = rad2deg(t1a_std) - offset;
+  const t1b_offset = rad2deg(t1b_std) - offset;
 
   return [{ t1: t1a_offset, t2: rad2deg(t2a) }, { t1: t1b_offset, t2: rad2deg(t2b) }];
 }
