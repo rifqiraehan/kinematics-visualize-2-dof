@@ -23,6 +23,36 @@ const debugEl = document.getElementById('debug');
 const canvas = document.getElementById('robotCanvas');
 const ctx = canvas.getContext('2d');
 
+function angleToPulse(angleDeg, minAngleDeg, maxAngleDeg, minPulse, maxPulse) {
+  const angle = clamp(angleDeg, minAngleDeg, maxAngleDeg);
+  const pulse = minPulse +
+                (angle - minAngleDeg) * ((maxPulse - minPulse) / (maxAngleDeg - minAngleDeg));
+  return Math.round(pulse);
+}
+
+const SERVO_PARAMS = {
+    J1: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 0 },
+    J2: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 2 }
+};
+
+const COMMAND_SPEED = 1000;
+
+function updateRobotCommand(t1, t2) {
+  const p1 = angleToPulse(t1,
+                          SERVO_PARAMS.J1.minAngle, SERVO_PARAMS.J1.maxAngle,
+                          SERVO_PARAMS.J1.minPulse, SERVO_PARAMS.J1.maxPulse);
+
+  const p2 = angleToPulse(t2,
+                          SERVO_PARAMS.J2.minAngle, SERVO_PARAMS.J2.maxAngle,
+                          SERVO_PARAMS.J2.minPulse, SERVO_PARAMS.J2.maxPulse);
+
+  const cmd1 = `#${SERVO_PARAMS.J1.channel} P${p1} S${COMMAND_SPEED}`;
+  const cmd2 = `#${SERVO_PARAMS.J2.channel} P${p2} S${COMMAND_SPEED}`;
+  const command = `${cmd1} ${cmd2}`;
+
+  return command;
+}
+
 function gripPulseToMm(pulse) {
   const pulseOpen = Number(gripPulseOpenEl.value);
   const pulseClosed = Number(gripPulseClosedEl.value);
@@ -258,8 +288,10 @@ document.getElementById('btnFK').addEventListener('click', () => {
   pxEl.value = px.toFixed(2);
   pyEl.value = py.toFixed(2);
 
+  const command = updateRobotCommand(t1, t2);
+
   drawArm(t1, t2, a1, a2);
-  debugEl.textContent = `Forward: θ1=${t1}°, θ2=${t2}° → Px=${px.toFixed(2)}, Py=${py.toFixed(2)}. IK Px/Py diisi otomatis.`;
+  debugEl.textContent = `Forward: θ1=${t1}°, θ2=${t2}° → Px=${px.toFixed(2)}, Py=${py.toFixed(2)}. COMMAND: ${command}`;
 });
 
 document.getElementById('btnFKReset').addEventListener('click', () => {
@@ -294,8 +326,10 @@ document.getElementById('btnRun1').addEventListener('click', () => {
   theta1El.value = t1; theta2El.value = t2;
   const a1 = Number(a1El.value); const a2 = Number(a2El.value);
   const f = computeForward(a1, a2, t1, t2);
+  const command = updateRobotCommand(t1, t2);
   fkResultEl.textContent = `Px = ${f.px.toFixed(2)} mm, Py = ${f.py.toFixed(2)} mm`;
   drawArm(t1, t2, a1, a2);
+  debugEl.textContent = `IK Sol 1 Run. COMMAND: ${command}`;
 });
 
 document.getElementById('btnRun2').addEventListener('click', () => {
@@ -305,8 +339,10 @@ document.getElementById('btnRun2').addEventListener('click', () => {
   theta1El.value = t1; theta2El.value = t2;
   const a1 = Number(a1El.value); const a2 = Number(a2El.value);
   const f = computeForward(a1, a2, t1, t2);
+  const command = updateRobotCommand(t1, t2);
   fkResultEl.textContent = `Px = ${f.px.toFixed(2)} mm, Py = ${f.py.toFixed(2)} mm`;
   drawArm(t1, t2, a1, a2);
+  debugEl.textContent = `IK Sol 2 Run. COMMAND: ${command}`;
 });
 
 // reset IK inputs
