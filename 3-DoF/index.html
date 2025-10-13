@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalkulator dan Visualisasi Kinematika 3-DoF (FK / IK)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <h1>Kalkulator dan Visualisasi Kinematika 3-DoF (Forward Kinematics &amp; Inverse Kinematics)</h1>
+  <div class="wrap">
+    <div class="card">
+      <fieldset>
+        <legend><strong>Parameter Robot (mm)</strong></legend>
+        <div class="row">
+          <label>a1: <input id="a1" type="number" value="120" step="1"></label>
+          <label>a2: <input id="a2" type="number" value="210" step="1"></label>
+          <label>a3: <input id="a3" type="number" value="100" step="1"></label>
+        </div>
+        <div class="row">
+            <label style="font-size: smaller;">
+            <input type="checkbox" id="offsetToggle" checked>
+            Aktifkan Offset +90° (Vertikal 0°)
+            </label>
+        </div>
+        <div class="muted">(Panah kecil = unit mm. Ubah sesuai pengukuran fisik.)</div>
+      </fieldset>
+
+      <fieldset>
+        <legend><strong>Forward Kinematics</strong></legend>
+        <div class="row">
+          <label>θ1 (deg): <input id="theta1" type="number" value="0" step="1"></label>
+          <label>θ2 (deg): <input id="theta2" type="number" value="0" step="1"></label>
+          <label>θ3 (deg): <input id="theta3" type="number" value="0" step="1"></label>
+        </div>
+        <div class="row">
+          <button id="btnFK">Hitung & Visualisasikan</button>
+          <button class="secondary" id="btnFKReset">Reset Sudut</button>
+        </div>
+        <div class="result" id="fkResult">Px = -, Py = -, φ = -</div>
+      </fieldset>
+
+      <fieldset>
+        <legend><strong>Inverse Kinematics</strong></legend>
+        <div class="row">
+          <label>Px: <input id="px" type="number" value="0" step="1"></label>
+          <label>Py: <input id="py" type="number" value="0" step="1"></label>
+          <label>Orientasi φ (deg): <input id="phi" type="number" value="0" step="1"></label>
+        </div>
+        <div class="row">
+          <button id="btnIK">Hitung IK (2 solusi)</button>
+          <button class="secondary" id="btnIKReset">Reset Posisi</button>
+        </div>
+
+        <div style="margin-top:8px">
+          <div><strong>Solusi 1:</strong> θ1 = <span id="ik1_t1">-</span>°, θ2 = <span id="ik1_t2">-</span>°, θ3 = <span id="ik1_t3">-</span>°</div>
+          <div><strong>Solusi 2:</strong> θ1 = <span id="ik2_t1">-</span>°, θ2 = <span id="ik2_t2">-</span>°, θ3 = <span id="ik2_t3">-</span>°</div>
+        </div>
+
+        <div style="margin-top:8px" class="row">
+          <button id="btnRun1">Run Solusi 1</button>
+          <button id="btnRun2">Run Solusi 2</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><strong>Jepit (Servo 4)</strong></legend>
+
+        <div class="row" style="display: flex; justify-content: space-between; gap: 10px;">
+          <div style="flex: 1;">
+            <label for="gripPulseOpen">Pulse Open (µs):</label>
+            <input id="gripPulseOpen" type="number" value="770" step="1" style="width: 80%;">
+          </div>
+          <div style="flex: 1;">
+            <label for="gripPulseClosed">Pulse Closed (µs):</label>
+            <input id="gripPulseClosed" type="number" value="1700" step="1" style="width: 80%;">
+          </div>
+        </div>
+
+        <div class="row" style="display: flex; justify-content: space-between; gap: 10px;">
+          <div style="flex: 1;">
+            <label for="gripMmOpen">Grip Open (mm):</label>
+            <input id="gripMmOpen" type="number" value="380" step="1" style="width: 80%;">
+          </div>
+          <div style="flex: 1;">
+            <label for="gripPulse">Pulse (µs):</label>
+            <input id="gripPulse" type="number" value="770" step="1" style="width: 80%;">
+          </div>
+        </div>
+
+        <div class="muted">Mapping linear: Pulse Open → Grip Open (mm); Pulse Closed → 0 mm</div>
+        <div style="margin-top:8px">Grip (mm): <span id="gripMm">380</span></div>
+      </fieldset>
+
+      <div style="margin-top:6px" class="muted">Catatan: semua perhitungan dalam mm dan derajat. IK memperhitungkan dua
+        solusi (elbow-up dan elbow-down). Jika target di luar jangkauan, sistem memberi peringatan.</div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>Visualisasi Robot</strong>
+          <div class="muted">(Klik FK atau Run IK untuk menggambar)</div>
+        </div>
+        <div class="muted">Skala otomatis & centered</div>
+      </div>
+
+      <canvas id="robotCanvas" width="760" height="560"></canvas>
+
+      <div style="margin-top:10px">
+        <button id="btnSnapshot">Download PNG</button>
+        <button class="secondary" id="btnClear">Bersihkan Canvas</button>
+      </div>
+
+      <div style="margin-top:12px">
+        <pre id="debug" style="height:120px">Instruksi singkat:
+        1) Ubah a1/a2/a3 jika perlu.
+        2) Untuk FK: masukkan θ1/θ2/θ3 lalu klik "Hitung & Visualisasikan".
+        3) Untuk IK: masukkan Px/Py/φ lalu klik "Hitung IK" — pilih Run Solusi 1 atau 2.
+        4) Jepit: ubah pulse untuk melihat perkiraan mm.
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
