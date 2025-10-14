@@ -24,8 +24,6 @@ const gripPulseOpenEl = document.getElementById('gripPulseOpen');
 const gripPulseClosedEl = document.getElementById('gripPulseClosed');
 const gripMmOpenEl = document.getElementById('gripMmOpen');
 const debugEl = document.getElementById('debug');
-const offsetToggleEl = document.getElementById('offsetToggle');
-let isOffsetEnabled = offsetToggleEl.checked;
 
 const canvas = document.getElementById('robotCanvas');
 const ctx = canvas.getContext('2d');
@@ -44,10 +42,6 @@ const SERVO_PARAMS = {
 };
 
 const COMMAND_SPEED = 1000;
-
-function getOffset() {
-  return isOffsetEnabled ? 90 : 0;
-}
 
 function updateRobotCommand(t1, t2, t3) {
   const p1 = angleToPulse(t1,
@@ -137,8 +131,7 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) {
   const origin = { x: w / 2, y: h - margin };
   drawGrid(maxReach, origin, scale);
 
-  const offset = getOffset();
-  const t1 = deg2rad(theta1_deg + offset); // Add 90 degrees offset for vertical zero
+  const t1 = deg2rad(theta1_deg);
   const t2 = deg2rad(theta2_deg);
   const t3 = deg2rad(theta3_deg);
 
@@ -159,12 +152,12 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) {
   const y3 = y2 + a3 * Math.sin(t1 + t2 + t3);
 
   // Scaled coordinates for drawing
-  const sx1 = origin.x + x1 * scale;
   const sy1 = origin.y - y1 * scale;
-  const sx2 = origin.x + x2 * scale;
   const sy2 = origin.y - y2 * scale;
-  const sx3 = origin.x + x3 * scale; // End effector
   const sy3 = origin.y - y3 * scale; // End effector
+  const sx1 = origin.x + x1 * scale;
+  const sx2 = origin.x + x2 * scale;
+  const sx3 = origin.x + x3 * scale; // End effector
 
   // Max Reach Circle
   ctx.beginPath();
@@ -251,7 +244,7 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) {
   ctx.lineWidth = 1;
   ctx.font = '10px Arial';
 
-  const t1_rad = deg2rad(theta1_deg + offset);
+  const t1_rad = deg2rad(theta1_deg);
   const t2_rad = deg2rad(theta2_deg);
   const t3_rad = deg2rad(theta3_deg);
 
@@ -287,7 +280,7 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) {
   ctx.font = '12px Arial'; ctx.fillStyle = '#222';
   ctx.fillText(`Px: ${x3.toFixed(1)} mm`, 8, 18);
   ctx.fillText(`Py: ${y3.toFixed(1)} mm`, 8, 36);
-  ctx.fillText(`φ: ${rad2deg(t1_plus_t2_plus_t3 - deg2rad(offset)).toFixed(1)}°`, 8, 54); // Orientation
+  ctx.fillText(`φ: ${rad2deg(t1_plus_t2_plus_t3).toFixed(1)}°`, 8, 54); // Orientation
   ctx.restore();
 }
 
@@ -301,71 +294,44 @@ function drawGridDefault() {
   drawGrid(maxReach, origin, scale);
 }
 
-offsetToggleEl.addEventListener('change', () => {
-  isOffsetEnabled = offsetToggleEl.checked;
-  redraw();
-  // If IK was run, re-run to update angles with new offset
-  const a1 = Number(a1El.value); const a2 = Number(a2El.value); const a3 = Number(a3El.value);
-  const px = Number(pxEl.value); const py = Number(pyEl.value); const phi = Number(phiEl.value);
-  const r = Math.hypot(px, py);
-  if (r > 1e-6) {
-    const sols = computeInverse(a1, a2, a3, px, py, phi);
-    if (sols) {
-      sols.forEach(s => { s.t1 = ((s.t1 + 180) % 360) - 180; s.t2 = ((s.t2 + 180) % 360) - 180; s.t3 = ((s.t3 + 180) % 360) - 180; });
-      ik1_t1.textContent = sols[0].t1.toFixed(2); ik1_t2.textContent = sols[0].t2.toFixed(2); ik1_t3.textContent = sols[0].t3.toFixed(2);
-      ik2_t1.textContent = sols[1].t1.toFixed(2); ik2_t2.textContent = sols[1].t2.toFixed(2); ik2_t3.textContent = sols[1].t3.toFixed(2);
-    }
-  }
-});
-
-// FK
+// Forward Kinematics
 function computeForward(a1, a2, a3, theta1_deg, theta2_deg, theta3_deg) {
-  const offset = getOffset();
-  const t1 = deg2rad(theta1_deg + offset); // Link 1 angle (base to X axis)
-  const t2 = deg2rad(theta2_deg);          // Link 2 angle (relative to Link 1)
-  const t3 = deg2rad(theta3_deg);          // Link 3 angle (relative to Link 2)
+  const t1 = deg2rad(theta1_deg);
+  const t2 = deg2rad(theta2_deg);
+  const t3 = deg2rad(theta3_deg);
 
   const px = a1 * Math.cos(t1) + a2 * Math.cos(t1 + t2) + a3 * Math.cos(t1 + t2 + t3);
   const py = a1 * Math.sin(t1) + a2 * Math.sin(t1 + t2) + a3 * Math.sin(t1 + t2 + t3);
-  const phi = rad2deg(t1 + t2 + t3) - offset; // End effector orientation in standard frame
+  const phi = rad2deg(t1 + t2 + t3);
+
   return { px, py, phi };
 }
 
-// IK
+// Inverse Kinematics
 function computeInverse(a1, a2, a3, qx, qy, phiDeg) {
-  const phi = deg2rad(phiDeg + getOffset()); // Convert desired end effector angle to angle relative to X-axis
+  const phi = deg2rad(phiDeg);
 
-  // Wrist point (P) calculation
+  // Wrist (end of link 2)
   const px = qx - a3 * Math.cos(phi);
   const py = qy - a3 * Math.sin(phi);
 
   const r2 = px * px + py * py;
-  const denom = 2 * a1 * a2;
-
-  // Check reachability for the wrist point
-  let cosT2 = (r2 - a1 * a1 - a2 * a2) / denom;
+  const cosT2 = (r2 - a1 * a1 - a2 * a2) / (2 * a1 * a2);
   if (cosT2 < -1 || cosT2 > 1) return null;
 
-  // Theta 2 solutions (Elbow up/down)
   const t2a = Math.acos(cosT2);
   const t2b = -Math.acos(cosT2);
 
-  // Theta 1 solutions
-  const t1a_std = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2a), a1 + a2 * Math.cos(t2a));
-  const t1b_std = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2b), a1 + a2 * Math.cos(t2b));
+  const t1a = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2a), a1 + a2 * Math.cos(t2a));
+  const t1b = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2b), a1 + a2 * Math.cos(t2b));
 
-  // Theta 3 solutions
-  const t3a = phi - (t1a_std + t2a);
-  const t3b = phi - (t1b_std + t2b);
+  const t3a = (t1a + t2a) - phi;
+  const t3b = (t1b + t2b) - phi;
 
-  // Map standard angle (X-axis zero) back to desired angle (Y-axis zero)
-  const offset = getOffset();
-  const t1a_offset = rad2deg(t1a_std) - offset;
-  const t1b_offset = rad2deg(t1b_std) - offset;
-
+  const normalize = a => ((a + 180) % 360) - 180;
   return [
-    { t1: t1a_offset, t2: rad2deg(t2a), t3: rad2deg(t3a) },
-    { t1: t1b_offset, t2: rad2deg(t2b), t3: rad2deg(t3b) }
+    { t1: normalize(rad2deg(t1a)), t2: normalize(rad2deg(t2a)), t3: normalize(rad2deg(t3a)) },
+    { t1: normalize(rad2deg(t1b)), t2: normalize(rad2deg(t2b)), t3: normalize(rad2deg(t3b)) }
   ];
 }
 
@@ -400,8 +366,8 @@ document.getElementById('btnIK').addEventListener('click', () => {
   // Check reachability based on wrist point (P) reach
   const maxReachWrist = a1 + a2;
   const minReachWrist = Math.abs(a1 - a2);
-  const qx = px - a3 * Math.cos(deg2rad(phi + getOffset()));
-  const qy = py - a3 * Math.sin(deg2rad(phi + getOffset()));
+  const qx = px - a3 * Math.cos(deg2rad(phi));
+  const qy = py - a3 * Math.sin(deg2rad(phi));
   const r = Math.hypot(qx, qy);
 
   if (r > maxReachWrist + 1e-6 || r < minReachWrist - 1e-6) {
