@@ -4,20 +4,20 @@ function clamp(x, a, b) { return Math.max(a, Math.min(b, x)) }
 
 const a1El = document.getElementById('a1');
 const a2El = document.getElementById('a2');
-const a3El = document.getElementById('a3'); // New: a3 element
+const a3El = document.getElementById('a3');
 const theta1El = document.getElementById('theta1');
 const theta2El = document.getElementById('theta2');
-const theta3El = document.getElementById('theta3'); // New: theta3 element
+const theta3El = document.getElementById('theta3');
 const pxEl = document.getElementById('px');
 const pyEl = document.getElementById('py');
-const phiEl = document.getElementById('phi'); // New: phi element
+const phiEl = document.getElementById('phi');
 const fkResultEl = document.getElementById('fkResult');
 const ik1_t1 = document.getElementById('ik1_t1');
 const ik1_t2 = document.getElementById('ik1_t2');
-const ik1_t3 = document.getElementById('ik1_t3'); // New: theta3 result 1
+const ik1_t3 = document.getElementById('ik1_t3');
 const ik2_t1 = document.getElementById('ik2_t1');
 const ik2_t2 = document.getElementById('ik2_t2');
-const ik2_t3 = document.getElementById('ik2_t3'); // New: theta3 result 2
+const ik2_t3 = document.getElementById('ik2_t3');
 const gripPulse = document.getElementById('gripPulse');
 const gripMmEl = document.getElementById('gripMm');
 const gripPulseOpenEl = document.getElementById('gripPulseOpen');
@@ -33,14 +33,14 @@ const ctx = canvas.getContext('2d');
 function angleToPulse(angleDeg, minAngleDeg, maxAngleDeg, minPulse, maxPulse) {
   const angle = clamp(angleDeg, minAngleDeg, maxAngleDeg);
   const pulse = minPulse +
-                (angle - minAngleDeg) * ((maxPulse - minPulse) / (maxAngleDeg - minAngleDeg));
+    (angle - minAngleDeg) * ((maxPulse - minPulse) / (maxAngleDeg - minAngleDeg));
   return Math.round(pulse);
 }
 
 const SERVO_PARAMS = {
-    J1: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 0 },
-    J2: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 2 },
-    J3: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 3 } // New: J3 params
+  J1: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 0 },
+  J2: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 2 },
+  J3: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 3 }
 };
 
 const COMMAND_SPEED = 1000;
@@ -49,23 +49,23 @@ function getOffset() {
   return isOffsetEnabled ? 90 : 0;
 }
 
-function updateRobotCommand(t1, t2, t3) { // Updated to accept t3
+function updateRobotCommand(t1, t2, t3) {
   const p1 = angleToPulse(t1,
-                          SERVO_PARAMS.J1.minAngle, SERVO_PARAMS.J1.maxAngle,
-                          SERVO_PARAMS.J1.minPulse, SERVO_PARAMS.J1.maxPulse);
+    SERVO_PARAMS.J1.minAngle, SERVO_PARAMS.J1.maxAngle,
+    SERVO_PARAMS.J1.minPulse, SERVO_PARAMS.J1.maxPulse);
 
   const p2 = angleToPulse(t2,
-                          SERVO_PARAMS.J2.minAngle, SERVO_PARAMS.J2.maxAngle,
-                          SERVO_PARAMS.J2.minPulse, SERVO_PARAMS.J2.maxPulse);
+    SERVO_PARAMS.J2.minAngle, SERVO_PARAMS.J2.maxAngle,
+    SERVO_PARAMS.J2.minPulse, SERVO_PARAMS.J2.maxPulse);
 
-  const p3 = angleToPulse(t3, // New: p3 calculation
-                          SERVO_PARAMS.J3.minAngle, SERVO_PARAMS.J3.maxAngle,
-                          SERVO_PARAMS.J3.minPulse, SERVO_PARAMS.J3.maxPulse);
+  const p3 = angleToPulse(t3,
+    SERVO_PARAMS.J3.minAngle, SERVO_PARAMS.J3.maxAngle,
+    SERVO_PARAMS.J3.minPulse, SERVO_PARAMS.J3.maxPulse);
 
   const cmd1 = `#${SERVO_PARAMS.J1.channel} P${p1} S${COMMAND_SPEED}`;
   const cmd2 = `#${SERVO_PARAMS.J2.channel} P${p2} S${COMMAND_SPEED}`;
-  const cmd3 = `#${SERVO_PARAMS.J3.channel} P${p3} S${COMMAND_SPEED}`; // New: cmd3
-  const command = `${cmd1} ${cmd2} ${cmd3}`; // Updated command string
+  const cmd3 = `#${SERVO_PARAMS.J3.channel} P${p3} S${COMMAND_SPEED}`;
+  const command = `${cmd1} ${cmd2} ${cmd3}`;
 
   return command;
 }
@@ -94,15 +94,15 @@ function autoUpdateGrip() {
 function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height) }
 
 function drawGrid(maxReach, origin, scale) {
-  const step = 20; // ukuran grid dalam mm
+  const step = 20; // grid size in mm
 
   ctx.beginPath();
-  // garis vertikal
+  // vertical line
   for (let x = -maxReach; x <= maxReach; x += step) {
     ctx.moveTo(origin.x + x * scale, origin.y - maxReach * scale);
     ctx.lineTo(origin.x + x * scale, origin.y + maxReach * scale);
   }
-  // garis horizontal
+  // horizontal line
   for (let y = -maxReach; y <= maxReach; y += step) {
     ctx.moveTo(origin.x - maxReach * scale, origin.y - y * scale);
     ctx.lineTo(origin.x + maxReach * scale, origin.y - y * scale);
@@ -111,7 +111,7 @@ function drawGrid(maxReach, origin, scale) {
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // kotak boundary untuk container grid
+  // boundary box for container grid
   ctx.strokeStyle = '#ccc';
   ctx.strokeRect(
     origin.x - maxReach * scale,
@@ -121,7 +121,7 @@ function drawGrid(maxReach, origin, scale) {
   );
 }
 
-function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) { // Updated to accept a3, theta3
+function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) {
   clearCanvas();
 
   ctx.save();
@@ -133,7 +133,7 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) { // Updated to
   const margin = 40;
   const scale = Math.min((w - margin * 2) / (2 * maxReach), (h - margin * 2) / (maxReach));
 
-  // origin tetap di bawah
+  // origin remains below
   const origin = { x: w / 2, y: h - margin };
   drawGrid(maxReach, origin, scale);
 
@@ -197,18 +197,17 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) { // Updated to
   // joint 2
   ctx.beginPath(); ctx.arc(sx1, sy1, 6, 0, Math.PI * 2); ctx.fillStyle = '#0a8a5f'; ctx.fill();
 
-  // link 3 (New)
+  // link 3
   ctx.beginPath();
   ctx.moveTo(sx2, sy2);
   ctx.lineTo(sx3, sy3);
-  ctx.strokeStyle = '#9d2dff'; // New color for Link 3
+  ctx.strokeStyle = '#9d2dff';
   ctx.lineWidth = 8;
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // joint 3 (New)
+  // joint 3
   ctx.beginPath(); ctx.arc(sx2, sy2, 6, 0, Math.PI * 2); ctx.fillStyle = '#ff7b00'; ctx.fill();
-
 
   ctx.beginPath();
   ctx.strokeStyle = 'rgba(255, 92, 58, 0.5)';
@@ -254,7 +253,7 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) { // Updated to
 
   const t1_rad = deg2rad(theta1_deg + offset);
   const t2_rad = deg2rad(theta2_deg);
-  const t3_rad = deg2rad(theta3_deg); // New: t3 rad
+  const t3_rad = deg2rad(theta3_deg);
 
   const r1 = 30;
   const startAngle1 = deg2rad(90);
@@ -275,7 +274,7 @@ function drawArm(theta1_deg, theta2_deg, theta3_deg, a1, a2, a3) { // Updated to
   const textY2 = sy1 - (r2 * scale + 15) * Math.sin(textAngle2);
   ctx.fillText(`θ2: ${theta2_deg.toFixed(1)}°`, textX2, textY2);
 
-  const r3 = 30; // New: Angle text for theta 3
+  const r3 = 30;
   const t1_plus_t2_plus_t3 = t1_rad + t2_rad + t3_rad;
 
   const textAngle3 = (t1_plus_t2 + t1_plus_t2_plus_t3) / 2;
@@ -312,14 +311,14 @@ offsetToggleEl.addEventListener('change', () => {
   if (r > 1e-6) {
     const sols = computeInverse(a1, a2, a3, px, py, phi);
     if (sols) {
-        sols.forEach(s => { s.t1 = ((s.t1 + 180) % 360) - 180; s.t2 = ((s.t2 + 180) % 360) - 180; s.t3 = ((s.t3 + 180) % 360) - 180; });
-        ik1_t1.textContent = sols[0].t1.toFixed(2); ik1_t2.textContent = sols[0].t2.toFixed(2); ik1_t3.textContent = sols[0].t3.toFixed(2);
-        ik2_t1.textContent = sols[1].t1.toFixed(2); ik2_t2.textContent = sols[1].t2.toFixed(2); ik2_t3.textContent = sols[1].t3.toFixed(2);
+      sols.forEach(s => { s.t1 = ((s.t1 + 180) % 360) - 180; s.t2 = ((s.t2 + 180) % 360) - 180; s.t3 = ((s.t3 + 180) % 360) - 180; });
+      ik1_t1.textContent = sols[0].t1.toFixed(2); ik1_t2.textContent = sols[0].t2.toFixed(2); ik1_t3.textContent = sols[0].t3.toFixed(2);
+      ik2_t1.textContent = sols[1].t1.toFixed(2); ik2_t2.textContent = sols[1].t2.toFixed(2); ik2_t3.textContent = sols[1].t3.toFixed(2);
     }
   }
 });
 
-// FK - implements KinematicsSolver.Forward from C#
+// FK
 function computeForward(a1, a2, a3, theta1_deg, theta2_deg, theta3_deg) {
   const offset = getOffset();
   const t1 = deg2rad(theta1_deg + offset); // Link 1 angle (base to X axis)
@@ -332,13 +331,13 @@ function computeForward(a1, a2, a3, theta1_deg, theta2_deg, theta3_deg) {
   return { px, py, phi };
 }
 
-// IK - implements KinematicsSolver.Inverse from C#
+// IK
 function computeInverse(a1, a2, a3, qx, qy, phiDeg) {
   const phi = deg2rad(phiDeg + getOffset()); // Convert desired end effector angle to angle relative to X-axis
 
   // Wrist point (P) calculation
   const px = qx - a3 * Math.cos(phi);
-  const py = qy - a3 * Math.Sin(phi);
+  const py = qy - a3 * Math.sin(phi);
 
   const r2 = px * px + py * py;
   const denom = 2 * a1 * a2;
@@ -365,8 +364,8 @@ function computeInverse(a1, a2, a3, qx, qy, phiDeg) {
   const t1b_offset = rad2deg(t1b_std) - offset;
 
   return [
-      { t1: t1a_offset, t2: rad2deg(t2a), t3: rad2deg(t3a) },
-      { t1: t1b_offset, t2: rad2deg(t2b), t3: rad2deg(t3b) }
+    { t1: t1a_offset, t2: rad2deg(t2a), t3: rad2deg(t3a) },
+    { t1: t1b_offset, t2: rad2deg(t2b), t3: rad2deg(t3b) }
   ];
 }
 
@@ -414,10 +413,10 @@ document.getElementById('btnIK').addEventListener('click', () => {
 
   const sols = computeInverse(a1, a2, a3, px, py, phi);
   if (!sols) {
-      ik1_t1.textContent = ik1_t2.textContent = ik1_t3.textContent = ik2_t1.textContent = ik2_t2.textContent = ik2_t3.textContent = '-';
-      debugEl.textContent = 'Target di luar jangkauan robot (cos(θ2) tidak valid)!';
-      alert('Target di luar jangkauan robot (Perhitungan cos(θ2) tidak valid)');
-      return;
+    ik1_t1.textContent = ik1_t2.textContent = ik1_t3.textContent = ik2_t1.textContent = ik2_t2.textContent = ik2_t3.textContent = '-';
+    debugEl.textContent = 'Target di luar jangkauan robot (cos(θ2) tidak valid)!';
+    alert('Target di luar jangkauan robot (Perhitungan cos(θ2) tidak valid)');
+    return;
   }
 
   // normalize angles to -180..180
@@ -431,7 +430,7 @@ document.getElementById('btnIK').addEventListener('click', () => {
 document.getElementById('btnRun1').addEventListener('click', () => {
   const t1 = Number(ik1_t1.textContent);
   const t2 = Number(ik1_t2.textContent);
-  const t3 = Number(ik1_t3.textContent); // New: t3
+  const t3 = Number(ik1_t3.textContent);
   if (isNaN(t1)) { alert('Hitung IK terlebih dahulu dan pastikan solusi valid.'); return; }
   theta1El.value = t1; theta2El.value = t2; theta3El.value = t3;
   const a1 = Number(a1El.value); const a2 = Number(a2El.value); const a3 = Number(a3El.value);
@@ -445,7 +444,7 @@ document.getElementById('btnRun1').addEventListener('click', () => {
 document.getElementById('btnRun2').addEventListener('click', () => {
   const t1 = Number(ik2_t1.textContent);
   const t2 = Number(ik2_t2.textContent);
-  const t3 = Number(ik2_t3.textContent); // New: t3
+  const t3 = Number(ik2_t3.textContent);
   if (isNaN(t1)) { alert('Hitung IK terlebih dahulu dan pastikan solusi valid.'); return; }
   theta1El.value = t1; theta2El.value = t2; theta3El.value = t3;
   const a1 = Number(a1El.value); const a2 = Number(a2El.value); const a3 = Number(a3El.value);
@@ -476,7 +475,7 @@ document.getElementById('btnSnapshot').addEventListener('click', () => {
 // initial draw
 clearCanvas(); drawGridDefault();
 
-// Pan & Zoom Support (unchanged)
+// Pan & Zoom Support
 let panX = 0, panY = 0;
 let zoom = 1;
 let isDragging = false;
@@ -504,7 +503,7 @@ canvas.addEventListener('wheel', e => {
   const scaleFactor = (e.deltaY < 0) ? 1.1 : 0.9;
   zoom *= scaleFactor;
 
-  // Zoom ke arah pointer
+  // Zoom in on the pointer
   const mouseX = e.offsetX, mouseY = e.offsetY;
   panX = mouseX - (mouseX - panX) * scaleFactor;
   panY = mouseY - (mouseY - panY) * scaleFactor;
@@ -512,13 +511,13 @@ canvas.addEventListener('wheel', e => {
   redraw();
 });
 
-// Helper redraw dengan posisi terakhir
+// Helper redraw with last position
 function redraw() {
   const a1 = Number(a1El.value);
   const a2 = Number(a2El.value);
-  const a3 = Number(a3El.value); // New: a3
+  const a3 = Number(a3El.value);
   const t1 = Number(theta1El.value);
   const t2 = Number(theta2El.value);
-  const t3 = Number(theta3El.value); // New: t3
+  const t3 = Number(theta3El.value);
   drawArm(t1, t2, t3, a1, a2, a3);
 }
