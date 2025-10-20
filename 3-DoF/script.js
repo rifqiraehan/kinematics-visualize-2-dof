@@ -325,8 +325,8 @@ function computeInverse(a1, a2, a3, qx, qy, phiDeg) {
   const t1a = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2a), a1 + a2 * Math.cos(t2a));
   const t1b = Math.atan2(py, px) - Math.atan2(a2 * Math.sin(t2b), a1 + a2 * Math.cos(t2b));
 
-  const t3a = (t1a + t2a) - phi;
-  const t3b = (t1b + t2b) - phi;
+  const t3a = phi - (t1a + t2a);
+  const t3b = phi - (t1b + t2b);
 
   const normalize = a => ((a + 180) % 360) - 180;
   return [
