@@ -36,9 +36,9 @@ function angleToPulse(angleDeg, minAngleDeg, maxAngleDeg, minPulse, maxPulse) {
 }
 
 const SERVO_PARAMS = {
-  J1: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 0 },
-  J2: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 2 },
-  J3: { minAngle: -90, maxAngle: 90, minPulse: 500, maxPulse: 2500, channel: 3 }
+  J1: { minAngle: 0,   maxAngle: 180, minPulse: 500,  maxPulse: 2500, channel: 0 },
+  J2: { minAngle: -90, maxAngle: 90,  minPulse: 500,  maxPulse: 2500, channel: 2 },
+  J3: { minAngle: -90, maxAngle: 90,  minPulse: 500,  maxPulse: 2500, channel: 3 }
 };
 
 const COMMAND_SPEED = 1000;
@@ -46,15 +46,15 @@ const COMMAND_SPEED = 1000;
 function updateRobotCommand(t1, t2, t3) {
   const p1 = angleToPulse(t1,
     SERVO_PARAMS.J1.minAngle, SERVO_PARAMS.J1.maxAngle,
-    SERVO_PARAMS.J1.minPulse, SERVO_PARAMS.J1.maxPulse);
+    SERVO_PARAMS.J1.maxPulse, SERVO_PARAMS.J1.minPulse);
 
   const p2 = angleToPulse(t2,
     SERVO_PARAMS.J2.minAngle, SERVO_PARAMS.J2.maxAngle,
-    SERVO_PARAMS.J2.minPulse, SERVO_PARAMS.J2.maxPulse);
+    SERVO_PARAMS.J2.maxPulse, SERVO_PARAMS.J2.minPulse);
 
   const p3 = angleToPulse(t3,
     SERVO_PARAMS.J3.minAngle, SERVO_PARAMS.J3.maxAngle,
-    SERVO_PARAMS.J3.minPulse, SERVO_PARAMS.J3.maxPulse);
+    SERVO_PARAMS.J3.maxPulse, SERVO_PARAMS.J3.minPulse);
 
   const cmd1 = `#${SERVO_PARAMS.J1.channel} P${p1} S${COMMAND_SPEED}`;
   const cmd2 = `#${SERVO_PARAMS.J2.channel} P${p2} S${COMMAND_SPEED}`;
